@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>امتحان الدراسات الاجتماعية - الصف السادس-الوحدة الرابعة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<script>
+// ══ CONFIG ════════════════════════════════════════════════════════════
+const EXAM_ID = "exam2"; // ✅ NEW
+const PWD = "teacher123";
+const EXAM_SECS = 10 * 60;
+const STORAGE_KEY = `exam_records_${EXAM_ID}`; // ✅ UPDATED
+
+// ══ STORAGE ═══════════════════════════════════════════════════════════
+async function storeSave(record) {
+  try {
+    const existing = await storeGetAll();
+    existing.push(record);
+    await window.storage.set(STORAGE_KEY, JSON.stringify(existing));
+    return true;
+  } catch(e) {
+    lSave(record);
+    return false;
+  }
+}
+
+async function storeGetAll() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY);
+    if (!result) return [];
+    return JSON.parse(result.value) || [];
+  } catch(e) {
+    return [];
+  }
+}
+
+async function storeClear() {
+  try {
+    await window.storage.delete(STORAGE_KEY);
+    return true;
+  } catch(e) { return false; }
+}
+
+function lGet() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+function lSave(r) { const a = lGet(); a.unshift(r); localStorage.setItem(STORAGE_KEY, JSON.stringify(a)); }
+function lClear() { localStorage.removeItem(STORAGE_KEY); }
+
+// ══ QUESTIONS (NEW EXAM) ═══════════════════════════════════════════════
+const qs = [
+  {t:"من أشهر قبائل عرب الجنوب (القحطانيون):",o:["الغساسنة","قريش","تميم"],c:0},
+  {t:"من أشهر الشاعرات في شبه الجزيرة العربية قبل الإسلام:",o:["جليلة بنت مرة","الخنساء","هند بنت عتبة"],c:1},
+  {t:"الاسم الذي أُطلق على شبه الجزيرة العربية:",o:["بلاد العرب","بلاد الشام","بلاد الشرق الأوسط"],c:0},
+  {t:"تقع اليمن في:",o:["الجزء الجنوبي الغربي من شبه الجزيرة العربية","الجزء الجنوبي الشرقي من شبه الجزيرة العربية","الجزء الشمالي الغربي من شبه الجزيرة العربية"],c:0},
+  {t:"عاصمة مملكة سبأ هي:",o:["قرناو","تمنع","مأرب"],c:2},
+  {t:"الاسم الذي أطلقه العرب على اليمن:",o:["اليمن الأحمر","بلاد العرب السعيد","اليمن الأخضر"],c:2},
+  {t:"من أهم مدن الحجاز:",o:["الطائف","اليمن","عدن"],c:0},
+  {t:"تُعرف الرفادة على أنها:",o:["تزويد الحجاج بالماء","تزويد الحجاج بالطعام","خدمة الكعبة"],c:1},
+  {t:"سبب اهتمام الإمبراطوريتين الفارسية والرومانية بشبه الجزيرة العربية هو:",o:["مناخها المناسب","وفرة مياهها","موقعها الاستراتيجي"],c:2},
+  {t:"من أهم أعمال زعيم قريش قصي بن كلاب في تنظيم شؤون مكة:",o:["توحيد قبائل مكة","تأسيس دار الندوة","جميع ما ذكر"],c:2}
+];
+
+let studentName = "";
+let ans = new Array(qs.length).fill(null);
+
+// ══ SIMPLE TEST UI (same logic, simplified for clarity) ═══════════════
+function startExam() {
+  studentName = prompt("اكتب اسمك:");
+  if(!studentName) return;
+  showQuestions();
+}
+
+function showQuestions() {
+  let html = "";
+  qs.forEach((q,i)=>{
+    html += `<p>${i+1}- ${q.t}</p>`;
+    q.o.forEach((o,j)=>{
+      html += `<label><input type="radio" name="q${i}" onclick="ans[${i}]=${j}"> ${o}</label><br>`;
+    });
+  });
+  html += `<button onclick="submitExam()">إنهاء</button>`;
+  document.body.innerHTML = html;
+}
+
+async function submitExam() {
+  let correct = 0;
+  ans.forEach((a,i)=>{ if(a===qs[i].c) correct++; });
+
+  const pct = Math.round(correct/qs.length*100);
+
+  const record = {
+    examId: EXAM_ID, // ✅ IMPORTANT
+    name: studentName,
+    correct,
+    total: qs.length,
+    pct,
+    time: new Date().toLocaleString("ar-JO"),
+    ts: new Date().toISOString()
+  };
+
+  await storeSave(record);
+
+  document.body.innerHTML = `<h2>النتيجة: ${correct}/10 (${pct}%)</h2>`;
+}
+
+// start
+startExam();
+</script>
+
+</body>
+</html>
